@@ -55,6 +55,19 @@ class TrainingConfig:
 
 
 @dataclass(frozen=True)
+class DistillationConfig:
+    temperature: float = 2.0
+    task_loss_weight: float = 1.0
+    kd_loss_weight: float = 1.0
+
+
+@dataclass(frozen=True)
+class XAIConfig:
+    max_examples: int = 1
+    ig_steps: int = 16
+
+
+@dataclass(frozen=True)
 class ExperimentConfig:
     project_name: str
     runtime: RuntimeConfig
@@ -62,6 +75,8 @@ class ExperimentConfig:
     model: Mapping[str, Any]
     evaluation: Mapping[str, Any]
     training: TrainingConfig
+    distillation: DistillationConfig
+    xai: XAIConfig
     paths: ArtifactPaths
     config_hash: str
 
@@ -103,6 +118,13 @@ def load_config(
     }
     data = DataConfig(**data_values)
     training = TrainingConfig(**raw.get("training", {}))
+    distillation = DistillationConfig(**raw.get("distillation", {}))
+    xai_values = {
+        key: value
+        for key, value in raw.get("xai", {}).items()
+        if key in XAIConfig.__dataclass_fields__
+    }
+    xai = XAIConfig(**xai_values)
     _validate_config(runtime, data)
 
     hash_input = dict(raw)
@@ -117,6 +139,8 @@ def load_config(
         model=raw["model"],
         evaluation=raw["evaluation"],
         training=training,
+        distillation=distillation,
+        xai=xai,
         paths=paths,
         config_hash=config_hash,
     )

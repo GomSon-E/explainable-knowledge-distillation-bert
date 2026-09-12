@@ -32,6 +32,15 @@ training:
   gradient_accumulation_steps: 1
   inference_repeats: 20
 
+distillation:
+  temperature: 2.0
+  task_loss_weight: 1.0
+  kd_loss_weight: 1.0
+
+xai:
+  max_examples: 1
+  ig_steps: 16
+
 evaluation:
   classification_metrics:
     - accuracy

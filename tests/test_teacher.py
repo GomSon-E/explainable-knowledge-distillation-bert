@@ -7,6 +7,7 @@ from torch import nn
 from explainable_kd.common.config import load_config
 from explainable_kd.training.baseline import baseline_experiment_id, train_baseline
 import explainable_kd.training.baseline as baseline_module
+from explainable_kd.training.kd import kd_loss, train_kd
 from explainable_kd.training.teacher import _collate_batch, teacher_experiment_id, train_teacher
 
 
@@ -125,3 +126,50 @@ def test_baseline_model_passes_num_labels_only_through_config(monkeypatch, tmp_p
 
     assert fake_config.num_hidden_layers == 6
     assert "num_labels" not in captured
+
+
+def test_kd_loss_uses_temperature_and_has_expected_components():
+    student = torch.tensor([[2.0, 0.0]], requires_grad=True)
+    teacher = torch.tensor([[0.0, 2.0]])
+
+    loss = kd_loss(student, teacher, temperature=2.0)
+    loss.backward()
+
+    expected = torch.nn.functional.kl_div(
+        torch.log_softmax(student / 2.0, dim=-1),
+        torch.softmax(teacher / 2.0, dim=-1),
+        reduction="batchmean",
+    ) * 4.0
+    assert torch.allclose(loss.detach(), expected)
+    assert student.grad is not None
+    assert torch.isfinite(student.grad).all()
+
+
+def test_kd_smoke_freezes_teacher_and_saves_depth_specific_artifacts(tmp_path):
+    config = load_config("configs/base.yaml", "configs/smoke.yaml", artifact_root=tmp_path)
+    split = Dataset.from_dict(
+        {
+            "input_ids": [[1] * 10, [2] * 10, [3] * 10, [4] * 10],
+            "attention_mask": [[1] * 10] * 4,
+            "label": [0, 1, 2, 3],
+        }
+    )
+    prepared = SimpleNamespace(dataset=DatasetDict({"train": split, "validation": split, "test": split}))
+    teacher = TinyTeacher()
+    student = TinyTeacher()
+
+    result = train_kd(
+        config,
+        depth=6,
+        teacher=teacher,
+        model=student,
+        tokenizer=TinyTokenizer(),
+        prepared_data=prepared,
+    )
+
+    assert result["experiment_id"] == "student_d6_kd"
+    assert result["teacher_ref"] == "teacher_d12_supervised"
+    assert all(not parameter.requires_grad for parameter in teacher.parameters())
+    assert {"train_task_loss", "train_kd_loss"} <= set(result["history"][0])
+    assert (tmp_path / "checkpoints/student_d6_kd/seed_42/best/pytorch_model.bin").exists()
+    assert (tmp_path / "metrics/student_d6_kd/seed_42/metrics.json").exists()

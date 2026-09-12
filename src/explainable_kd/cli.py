@@ -14,6 +14,8 @@ from explainable_kd.common.seed import seed_everything
 from explainable_kd.data.pipeline import prepare_dataset, run_smoke_test
 from explainable_kd.training.teacher import train_teacher
 from explainable_kd.training.baseline import train_baselines
+from explainable_kd.training.kd import train_kd
+from explainable_kd.xai.ig import extract_ig
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,6 +42,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_config_arguments(teacher)
     baselines = subparsers.add_parser("train-baselines", help="train 10-, 8-, and 6-layer labels-only baselines")
     _add_config_arguments(baselines)
+    kd = subparsers.add_parser("train-kd", help="train 10-, 8-, and 6-layer students with standard KD")
+    _add_config_arguments(kd)
+    ig = subparsers.add_parser("extract-ig", help="extract and visualize Integrated Gradients")
+    _add_config_arguments(ig)
+    ig.add_argument("--max-examples", type=int)
     return parser
 
 
@@ -50,6 +57,8 @@ def main(
     smoke_runner: Callable[[Any, int], dict[str, Any]] | None = None,
     train_runner: Callable[[Any], dict[str, Any]] | None = None,
     baseline_runner: Callable[[Any], dict[str, Any]] | None = None,
+    kd_runner: Callable[[Any], dict[str, Any]] | None = None,
+    ig_runner: Callable[[Any, int], dict[str, Any]] | None = None,
 ) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "list-experiments":
@@ -84,8 +93,15 @@ def main(
         result = runner(config, args.batch_size)
     elif args.command == "train-teacher":
         result = (train_runner or train_teacher)(config)
-    else:
+    elif args.command == "train-baselines":
         result = (baseline_runner or train_baselines)(config)
+    elif args.command == "train-kd":
+        result = (kd_runner or train_kd)(config)
+    elif args.command == "extract-ig":
+        max_examples = args.max_examples or config.xai.max_examples
+        result = (ig_runner or extract_ig)(config, max_examples)
+    else:
+        raise ValueError(f"unsupported command: {args.command}")
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 
