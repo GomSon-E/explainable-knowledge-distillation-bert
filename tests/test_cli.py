@@ -90,3 +90,27 @@ def test_train_teacher_routes_smoke_and_full_modes(tmp_path, capsys):
     assert exit_code == 0
     assert calls == [True, False]
     assert json.loads(full_output[full_output.index("{") :])["mode"] == "full"
+
+
+def test_train_baselines_routes_to_baseline_runner(tmp_path, capsys):
+    calls = []
+
+    def runner(config):
+        calls.append(config.runtime.smoke_test)
+        return {"status": "passed"}
+
+    exit_code = main(
+        [
+            "train-baselines",
+            "--config",
+            "configs/base.yaml",
+            "--overlay",
+            "configs/smoke.yaml",
+            "--artifact-root",
+            str(tmp_path),
+        ],
+        baseline_runner=runner,
+    )
+
+    assert exit_code == 0
+    assert calls == [True]
