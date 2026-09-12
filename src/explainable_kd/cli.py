@@ -15,6 +15,7 @@ from explainable_kd.data.pipeline import prepare_dataset, run_smoke_test
 from explainable_kd.training.teacher import train_teacher
 from explainable_kd.training.baseline import train_baselines
 from explainable_kd.training.kd import train_kd
+from explainable_kd.training.ig_kd import train_ig_kd
 from explainable_kd.xai.ig import extract_ig
 
 
@@ -47,6 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
     ig = subparsers.add_parser("extract-ig", help="extract and visualize Integrated Gradients")
     _add_config_arguments(ig)
     ig.add_argument("--max-examples", type=int)
+    ig_kd = subparsers.add_parser("train-ig-kd", help="train 10-, 8-, and 6-layer IG KD students")
+    _add_config_arguments(ig_kd)
     return parser
 
 
@@ -59,6 +62,7 @@ def main(
     baseline_runner: Callable[[Any], dict[str, Any]] | None = None,
     kd_runner: Callable[[Any], dict[str, Any]] | None = None,
     ig_runner: Callable[[Any, int], dict[str, Any]] | None = None,
+    ig_kd_runner: Callable[[Any], dict[str, Any]] | None = None,
 ) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "list-experiments":
@@ -100,6 +104,8 @@ def main(
     elif args.command == "extract-ig":
         max_examples = args.max_examples or config.xai.max_examples
         result = (ig_runner or extract_ig)(config, max_examples)
+    elif args.command == "train-ig-kd":
+        result = (ig_kd_runner or train_ig_kd)(config)
     else:
         raise ValueError(f"unsupported command: {args.command}")
     print(json.dumps(result, indent=2, sort_keys=True))

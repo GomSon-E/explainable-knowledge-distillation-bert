@@ -59,6 +59,7 @@ class DistillationConfig:
     temperature: float = 2.0
     task_loss_weight: float = 1.0
     kd_loss_weight: float = 1.0
+    ig_loss_weight: float = 1.0
 
 
 @dataclass(frozen=True)

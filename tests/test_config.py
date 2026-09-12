@@ -31,6 +31,7 @@ def test_load_config_merges_smoke_overlay_and_artifact_override(tmp_path):
     assert config.distillation.temperature == 2.0
     assert config.distillation.task_loss_weight == 1.0
     assert config.distillation.kd_loss_weight == 1.0
+    assert config.distillation.ig_loss_weight == 1.0
     assert config.xai.max_examples == 1
     assert config.paths.root == (tmp_path / "drive-artifacts").resolve()
     assert len(config.config_hash) == 64

@@ -29,6 +29,22 @@ def integrated_gradients(model, batch: Mapping[str, torch.Tensor], target_class:
     """Return signed embedding IG scores, masking special tokens and padding."""
     if steps < 1:
         raise ValueError("steps must be positive")
+    scores, valid_mask, logits = integrated_gradients_tensor(
+        model, batch, target_class, tokenizer, steps=steps, create_graph=False
+    )
+    ids = batch["input_ids"][0].detach().cpu().tolist()
+    return {
+        "tokens": tokenizer.convert_ids_to_tokens(ids),
+        "scores": [float(score) if valid else 0.0 for score, valid in zip(scores[0].detach().cpu().tolist(), valid_mask[0])],
+        "valid_mask": valid_mask[0],
+        "target_class": int(target_class),
+        "predicted_class": int(logits.argmax(-1)[0].item()),
+    }
+
+
+def integrated_gradients_tensor(model, batch: Mapping[str, torch.Tensor], target_class, tokenizer: Any, *, steps: int = 16, create_graph: bool = False):
+    """Return tensor IG scores; ``create_graph=True`` keeps the Student gradient path."""
+    was_training = model.training
     model.eval()
     input_ids = batch["input_ids"]
     attention_mask = batch["attention_mask"]
@@ -41,22 +57,23 @@ def integrated_gradients(model, batch: Mapping[str, torch.Tensor], target_class:
         model_inputs = {key: value for key, value in batch.items() if key not in {"input_ids", "labels"}}
         output = model(inputs_embeds=interpolated, **model_inputs)
         logits = output.logits if hasattr(output, "logits") else output["logits"]
-        gradients = torch.autograd.grad(logits[:, target_class].sum(), interpolated)[0]
+        targets = target_class if torch.is_tensor(target_class) else torch.full((logits.shape[0],), target_class, device=logits.device, dtype=torch.long)
+        selected = logits.gather(1, targets.view(-1, 1)).sum()
+        gradients = torch.autograd.grad(selected, interpolated, create_graph=create_graph)[0]
         total_gradients += gradients
-    scores = ((embeddings - baseline) * total_gradients / steps).sum(dim=-1).detach()[0]
+    scores = ((embeddings - baseline) * total_gradients / steps).sum(dim=-1)
 
     with torch.no_grad():
         output = model(**{key: value for key, value in batch.items() if key != "labels"})
         logits = output.logits if hasattr(output, "logits") else output["logits"]
-    ids = input_ids[0].detach().cpu().tolist()
-    valid_mask = [bool(mask) and token_id not in set(tokenizer.all_special_ids) for token_id, mask in zip(ids, attention_mask[0].detach().cpu().tolist())]
-    return {
-        "tokens": tokenizer.convert_ids_to_tokens(ids),
-        "scores": [float(score) if valid else 0.0 for score, valid in zip(scores.cpu().tolist(), valid_mask)],
-        "valid_mask": valid_mask,
-        "target_class": int(target_class),
-        "predicted_class": int(logits.argmax(-1)[0].item()),
-    }
+    special_ids = set(tokenizer.all_special_ids)
+    valid_mask = [
+        [bool(mask) and token_id not in special_ids for token_id, mask in zip(ids, masks)]
+        for ids, masks in zip(input_ids.detach().cpu().tolist(), attention_mask.detach().cpu().tolist())
+    ]
+    if was_training:
+        model.train()
+    return scores, valid_mask, logits
 
 
 def cosine_similarity(first: list[float], second: list[float], valid_mask: list[bool]) -> float:
@@ -70,7 +87,7 @@ def cosine_similarity(first: list[float], second: list[float], valid_mask: list[
     return float(torch.nn.functional.cosine_similarity(left.unsqueeze(0), right.unsqueeze(0)).item())
 
 
-def extract_ig(config, max_examples: int | None = None) -> dict[str, Any]:
+def extract_ig(config, max_examples: int | None = None, *, experiment_ids=IG_EXPERIMENTS) -> dict[str, Any]:
     """Extract IG for the same test questions across Teacher, baselines, and KD Students."""
     tokenizer = AutoTokenizer.from_pretrained(config.data.tokenizer_name, revision=config.data.tokenizer_revision, use_fast=True)
     prepared = prepare_dataset(config, tokenizer=tokenizer)
@@ -79,13 +96,13 @@ def extract_ig(config, max_examples: int | None = None) -> dict[str, Any]:
     if max_examples < 1:
         raise ValueError("max_examples must be positive")
     models = {}
-    for experiment_id in IG_EXPERIMENTS:
+    for experiment_id in experiment_ids:
         path = config.paths.checkpoint(experiment_id, config.runtime.seed, "best")
         if not path.exists():
             raise FileNotFoundError(f"checkpoint not found for {experiment_id}: {path}")
         models[experiment_id] = AutoModelForSequenceClassification.from_pretrained(path, local_files_only=True).to(device).eval()
 
-    rows_by_experiment = {experiment_id: [] for experiment_id in IG_EXPERIMENTS}
+    rows_by_experiment = {experiment_id: [] for experiment_id in experiment_ids}
     for row in prepared.dataset["test"].select(range(min(max_examples, len(prepared.dataset["test"])) )):
         batch = _row_to_batch(row, device)
         target_class = int(row["label"])
@@ -102,14 +119,14 @@ def extract_ig(config, max_examples: int | None = None) -> dict[str, Any]:
 
     teacher_rows = {row["example_id"]: row for row in rows_by_experiment[TEACHER_ID]}
     similarity = {}
-    for experiment_id in IG_EXPERIMENTS[1:]:
+    for experiment_id in experiment_ids[1:]:
         values = [cosine_similarity(teacher_rows[row["example_id"]]["scores"], row["scores"], teacher_rows[row["example_id"]]["valid_mask"]) for row in rows_by_experiment[experiment_id]]
         similarity[experiment_id] = {"values": values, "mean_cosine_similarity": sum(values) / max(1, len(values)), "teacher_ref": TEACHER_ID}
     similarity_path = config.paths.root / "metrics" / "ig_similarity" / f"seed_{config.runtime.seed}.json"
     similarity_path.parent.mkdir(parents=True, exist_ok=True)
     similarity_path.write_text(json.dumps(similarity, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     figure_paths = _write_comparison_figures(config, rows_by_experiment)
-    return {"status": "passed", "method": "integrated_gradients", "device": str(device), "examples": len(teacher_rows), "experiments": list(IG_EXPERIMENTS), "attribution_paths": {key: str(config.paths.root / "attributions" / "ig" / key / f"seed_{config.runtime.seed}" / "examples.jsonl") for key in IG_EXPERIMENTS}, "similarity_path": str(similarity_path), "figure_paths": figure_paths}
+    return {"status": "passed", "method": "integrated_gradients", "device": str(device), "examples": len(teacher_rows), "experiments": list(experiment_ids), "attribution_paths": {key: str(config.paths.root / "attributions" / "ig" / key / f"seed_{config.runtime.seed}" / "examples.jsonl") for key in experiment_ids}, "similarity_path": str(similarity_path), "figure_paths": figure_paths}
 
 
 def _row_to_batch(row: Mapping[str, Any], device: torch.device) -> dict[str, torch.Tensor]:
@@ -124,10 +141,11 @@ def _write_comparison_figures(config, rows_by_experiment):
     figure_root.mkdir(parents=True, exist_ok=True)
     paths = []
     for index, teacher_row in enumerate(rows_by_experiment[TEACHER_ID]):
-        labels = ["Teacher", "B10 base", "B8 base", "B6 base", "B10 KD", "B8 KD", "B6 KD"]
-        figure, axes = plt.subplots(len(IG_EXPERIMENTS), 1, figsize=(max(8, len(teacher_row["tokens"]) * 0.35), 10), sharex=True)
-        axes = [axes] if len(IG_EXPERIMENTS) == 1 else axes
-        for axis, experiment_id, label in zip(axes, IG_EXPERIMENTS, labels):
+        labels = ["Teacher" if experiment_id == TEACHER_ID else experiment_id.removeprefix("student_") for experiment_id in rows_by_experiment]
+        experiment_ids = tuple(rows_by_experiment)
+        figure, axes = plt.subplots(len(experiment_ids), 1, figsize=(max(8, len(teacher_row["tokens"]) * 0.35), 10), sharex=True)
+        axes = [axes] if len(experiment_ids) == 1 else axes
+        for axis, experiment_id, label in zip(axes, experiment_ids, labels):
             row = rows_by_experiment[experiment_id][index]
             valid = row["valid_mask"]
             tokens = [token for token, is_valid in zip(row["tokens"], valid) if is_valid]
