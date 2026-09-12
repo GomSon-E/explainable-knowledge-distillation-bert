@@ -5,7 +5,7 @@ from datasets import Dataset, DatasetDict
 from torch import nn
 
 from explainable_kd.common.config import load_config
-from explainable_kd.training.teacher import teacher_experiment_id, train_teacher
+from explainable_kd.training.teacher import _collate_batch, teacher_experiment_id, train_teacher
 
 
 def test_teacher_experiment_is_fixed_to_the_canonical_12_layer_condition(tmp_path):
@@ -51,3 +51,15 @@ def test_teacher_smoke_persists_metrics_and_best_last_checkpoints(tmp_path):
     assert (tmp_path / "checkpoints/teacher_d12_supervised/seed_42/last/training_state.pt").exists()
     assert (tmp_path / "metrics/teacher_d12_supervised/seed_42/metrics.json").exists()
     assert result["efficiency"]["latency_scope"] == "classification_only"
+
+
+def test_collator_converts_dataset_rows_without_torch_formatter_dependencies():
+    batch = _collate_batch(
+        [
+            {"input_ids": [1, 2], "attention_mask": [1, 1], "label": 0},
+            {"input_ids": [3, 4], "attention_mask": [1, 1], "label": 1},
+        ]
+    )
+
+    assert batch["input_ids"].shape == (2, 2)
+    assert batch["labels"].tolist() == [0, 1]

@@ -99,10 +99,15 @@ def measure_efficiency(model, loader, device, repeats: int, checkpoint: Path) ->
 def _loaders(dataset, config):
     loaders = []
     for name in ("train", "validation", "test"):
-        split = dataset[name]; columns = [c for c in ("input_ids", "attention_mask", "token_type_ids", "label") if c in split.column_names]
-        split.set_format(type="torch", columns=columns); split = split.rename_column("label", "labels")
-        loaders.append(DataLoader(split, batch_size=config.training.batch_size, shuffle=name == "train"))
+        loaders.append(DataLoader(dataset[name], batch_size=config.training.batch_size, shuffle=name == "train", collate_fn=_collate_batch))
     return loaders
+
+
+def _collate_batch(rows):
+    keys = ("input_ids", "attention_mask", "token_type_ids")
+    batch = {key: torch.tensor([row[key] for row in rows], dtype=torch.long) for key in keys if key in rows[0]}
+    batch["labels"] = torch.tensor([row["label"] for row in rows], dtype=torch.long)
+    return batch
 
 
 def _forward_loss(model, batch):
