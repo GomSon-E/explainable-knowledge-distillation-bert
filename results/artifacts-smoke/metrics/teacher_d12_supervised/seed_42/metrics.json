@@ -1,0 +1,44 @@
+{
+  "artifacts": {
+    "best_checkpoint": "/content/explainable-knowledge-distillation-bert/artifacts-smoke/checkpoints/teacher_d12_supervised/seed_42/best",
+    "last_checkpoint": "/content/explainable-knowledge-distillation-bert/artifacts-smoke/checkpoints/teacher_d12_supervised/seed_42/last"
+  },
+  "best_validation_f1_macro": 0.07894736842105263,
+  "config_hash": "de5570e30ec845ef060b4e2a0d6fca71d5a4084b9cd547490b6526eaf1be3930",
+  "depth": 12,
+  "device": {
+    "cuda_available": true,
+    "cuda_device_count": 1,
+    "cuda_device_name": "Tesla T4",
+    "device": "cuda"
+  },
+  "efficiency": {
+    "classification_inference_ms_per_batch": 15.289060399999244,
+    "latency_scope": "classification_only",
+    "model_file_size_mb": 413.8502,
+    "parameter_count": 108314886,
+    "timed_batch_size": 16
+  },
+  "experiment_id": "teacher_d12_supervised",
+  "history": [
+    {
+      "accuracy": 0.1875,
+      "epoch": 1,
+      "f1_macro": 0.07894736842105263,
+      "loss": 1.7180540561676025,
+      "precision_macro": 0.046875,
+      "recall_macro": 0.25,
+      "train_loss": 2.0077545642852783
+    }
+  ],
+  "method": "supervised",
+  "role": "teacher",
+  "seed": 42,
+  "test": {
+    "accuracy": 0.125,
+    "f1_macro": 0.05555555555555555,
+    "loss": 1.7517409324645996,
+    "precision_macro": 0.03125,
+    "recall_macro": 0.25
+  }
+}
