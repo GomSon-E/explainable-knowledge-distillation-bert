@@ -26,6 +26,8 @@ def test_load_config_merges_smoke_overlay_and_artifact_override(tmp_path):
     assert config.data.tokenizer_name == "google-bert/bert-base-cased"
     assert config.data.max_length == 10
     assert config.data.max_train_samples == 32
+    assert config.training.epochs == 1
+    assert config.training.max_steps == 2
     assert config.paths.root == (tmp_path / "drive-artifacts").resolve()
     assert len(config.config_hash) == 64
 
