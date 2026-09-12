@@ -3,7 +3,8 @@
 이 저장소는 12층 BERT Teacher의 예측 분포와 토큰 중요도를 10·8·6층
 Student에 전달하는 13개 실험을 Google Colab GPU에서 재현하기 위한
 프로젝트 골격이다. 현재 단계에는 **학습, 평가, IG, LRP 구현이 없으며**,
-실행 구조와 설정·산출물 계약만 정의되어 있다.
+실행 구조와 설정·산출물 계약만 정의되어 있다. 현재 구현 범위는 공통 데이터
+기반과 smoke test까지이며 Teacher/Student/KD/XAI 학습은 아직 시작하지 않았다.
 
 설계 기준 문서는 `AGENTS.md`, `01_video_notes.md`,
 `02_assignment_brief.md`, `03_experiment_plan.md`,
@@ -120,6 +121,61 @@ artifacts/
 - `best/`와 `last/`는 같은 run 디렉터리 안에서만 갱신하며 다른 seed나
   실험 ID의 체크포인트를 자동 탐색하지 않는다.
 
+## 데이터·공통 기반 실행
+
+`configs/base.yaml`은 `lukasgarbas/trec`의 고정 revision을 사용한다. 이
+Parquet 기반 TREC-6 mirror는 `datasets==4.1.1`에서 Python dataset script
+오류 없이 로드되며, 원본 train/validation 5,452개를 다시 합쳐 seed 42로
+90/10 validation을 만들고 원본 test 500개는 유지한다. coarse label은 다음
+순서로 정수 매핑한다.
+
+`ABBR=0`, `ENTY=1`, `DESC=2`, `HUM=3`, `LOC=4`, `NUM=5`
+
+Colab에서 저장소 루트로 이동한 뒤 다음 순서로 실행한다.
+
+```bash
+pip install -r requirements.txt
+pip install .
+python -m explainable_kd.cli device
+python -m explainable_kd.cli prepare-data \
+  --config configs/base.yaml \
+  --overlay configs/smoke.yaml \
+  --artifact-root /content/hanyang-artifacts
+python -m explainable_kd.cli smoke-test \
+  --config configs/base.yaml \
+  --overlay configs/smoke.yaml \
+  --artifact-root /content/hanyang-artifacts \
+  --batch-size 4
+```
+
+`device`는 `CUDA available`과 선택된 device를 출력한다. `prepare-data`는
+`data/split_manifest.json`과 `data/processed/<fingerprint>/`를 만들고,
+`smoke-test`는 `metrics/smoke_test.json`에 실제 batch tensor shape·dtype를
+기록한다. Google Drive를 사용하려면 `/content/drive/...`를
+`--artifact-root`에 전달한다.
+
+### Smoke test 결과
+
+2026-09-12에 고정 revision과 실제 BERT tokenizer로 로컬 CPU에서 위와 같은
+CLI 경로를 실행했다. 이는 Colab GPU 학습 결과가 아니라 데이터 입력 계약을
+검증한 결과다.
+
+```text
+status: passed
+split_counts: train=32, validation=16, test=16
+batch_size: 4
+sequence_length: 10
+input_ids: [4, 10] torch.int64
+attention_mask: [4, 10] torch.int64
+token_type_ids: [4, 10] torch.int64
+CUDA available: False
+Device: cpu
+```
+
+Colab에서는 같은 명령에서 `CUDA available: True`, `Device: cuda`가
+출력되는지 먼저 확인한다. smoke artifact JSON에는 dataset/tokenizer
+revision, data fingerprint, split counts, tensor shapes가 함께 저장된다.
+
 ## Colab 실행 준비
 
 1. Colab에서 GPU runtime을 선택한다.
@@ -127,10 +183,10 @@ artifacts/
 3. 영속 저장이 필요하면 Google Drive를 mount하고 artifact root만 Drive
    경로로 override한다. 코드나 데이터 경로에 로컬 VS Code 절대 경로를 쓰지 않는다.
 4. `notebooks/run_experiments_colab.ipynb`의 setup과 device check 셀을 실행한다.
-5. 저장소 루트에서 `pip install -r requirements.txt` 및
-   `pip install -e .`에 해당하는 설치 구조를 구현 단계에서 확정한다.
+5. 저장소 루트에서 `pip install -r requirements.txt`와 `pip install .`을
+   실행한다. 구형 로컬 pip의 editable 설치는 사용하지 않는다.
 
-현재는 패키징 메타데이터와 CLI가 구현 전이므로 notebook의 학습 명령은
+현재 notebook에는 데이터 준비·smoke 명령만 활성화되어 있으며 학습 명령은
 의도적으로 주석 처리되어 있다.
 
 ## Colab 실행 순서와 단계별 I/O
