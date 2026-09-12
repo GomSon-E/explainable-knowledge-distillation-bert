@@ -60,12 +60,14 @@ class DistillationConfig:
     task_loss_weight: float = 1.0
     kd_loss_weight: float = 1.0
     ig_loss_weight: float = 1.0
+    lrp_loss_weight: float = 1.0
 
 
 @dataclass(frozen=True)
 class XAIConfig:
     max_examples: int = 1
     ig_steps: int = 16
+    lrp_epsilon: float = 1e-6
 
 
 @dataclass(frozen=True)

@@ -188,3 +188,18 @@ def test_train_ig_kd_routes_to_ig_kd_runner(tmp_path, capsys):
 
     assert exit_code == 0
     assert calls == [True]
+
+
+def test_train_lrp_kd_routes_to_lrp_kd_runner(tmp_path, capsys):
+    calls = []
+
+    def runner(config):
+        calls.append(config.runtime.smoke_test)
+        return {"status": "passed"}
+
+    exit_code = main(
+        ["train-lrp-kd", "--config", "configs/base.yaml", "--overlay", "configs/smoke.yaml", "--artifact-root", str(tmp_path)],
+        lrp_kd_runner=runner,
+    )
+    assert exit_code == 0
+    assert calls == [True]

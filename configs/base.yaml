@@ -37,10 +37,12 @@ distillation:
   task_loss_weight: 1.0
   kd_loss_weight: 1.0
   ig_loss_weight: 1.0
+  lrp_loss_weight: 1.0
 
 xai:
   max_examples: 1
   ig_steps: 16
+  lrp_epsilon: 1.0e-6
 
 evaluation:
   classification_metrics:

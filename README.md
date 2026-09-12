@@ -75,6 +75,27 @@ Baseline은 Teacher 체크포인트를 읽지 않는다. Student 간 순차 증�
 
 ## Artifact 저장 규칙
 
+## LRP 규칙과 구현 범위
+
+`src/explainable_kd/xai/lrp.py`는 BERT 입력 embedding에서 target logit까지의
+epsilon-stabilized relevance를 계산한다. 현재 Hugging Face BERT 내부 graph를
+모든 연산 단위로 분해하는 표준 Captum 경로가 없으므로, 다음의 명시적
+BERT-compatible 규칙을 사용한다.
+
+| 구성요소 | relevance 처리 |
+|---|---|
+| Linear·embedding | `x * d(logit)/dx`를 epsilon으로 안정화·정규화 |
+| Attention | attention weight 자체를 증거로 취급하지 않고 token/value 경로로 보존 |
+| Residual | shortcut과 변환 branch의 입력 contribution으로 relevance 보존 |
+| LayerNorm | 평균·분산 통계로 relevance를 만들지 않고 입력 방향으로 보존 |
+| GELU·dropout | 입력 contribution 방향으로 전달 |
+
+이 범위는 gradient×input을 LRP로 이름만 바꾼 것이 아니라, 위 규칙과
+`LRP_RULES` 메타데이터를 함께 저장하는 epsilon relevance 구현이다. 다만
+attention/residual/LayerNorm의 exact operator-level 분해가 필요하면 별도의
+BERT graph tracer가 필요하며, Colab smoke와 본 실험 결과에는 이 제한을
+명시한다.
+
 실행 한 건의 식별자는 `(experiment_id, seed)`이다. 체크포인트와 run별
 결과는 항상 다음 형식을 사용한다.
 
