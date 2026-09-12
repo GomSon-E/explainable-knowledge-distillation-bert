@@ -145,8 +145,8 @@ def _resume_if_available(config, model, optimizer, scheduler, paths, device):
 def _load_model_weights(model, path):
     if (path / "pytorch_model.bin").exists(): model.load_state_dict(torch.load(path / "pytorch_model.bin", map_location="cpu", weights_only=False))
     elif (path / "model.safetensors").exists():
-        from safetensors.torch import load_file
-        model.load_state_dict(load_file(str(path / "model.safetensors")))
+        restored = AutoModelForSequenceClassification.from_pretrained(path, local_files_only=True)
+        model.load_state_dict(restored.state_dict())
 
 
 def _write_result(paths, seed, result, history):
