@@ -1,0 +1,39 @@
+{
+  "artifacts": {
+    "best_checkpoint": "/content/explainable-knowledge-distillation-bert/artifacts-smoke/checkpoints/student_d10_baseline/seed_42/best",
+    "last_checkpoint": "/content/explainable-knowledge-distillation-bert/artifacts-smoke/checkpoints/student_d10_baseline/seed_42/last"
+  },
+  "best_validation_f1_macro": 0.07894736842105263,
+  "config_hash": "de5570e30ec845ef060b4e2a0d6fca71d5a4084b9cd547490b6526eaf1be3930",
+  "depth": 10,
+  "efficiency": {
+    "classification_inference_ms_per_batch": 12.758657349991154,
+    "latency_scope": "classification_only",
+    "model_file_size_mb": 359.7704,
+    "parameter_count": 94139142,
+    "timed_batch_size": 16
+  },
+  "experiment_id": "student_d10_baseline",
+  "history": [
+    {
+      "accuracy": 0.1875,
+      "epoch": 1,
+      "f1_macro": 0.07894736842105263,
+      "loss": 1.7152076959609985,
+      "precision_macro": 0.046875,
+      "recall_macro": 0.25,
+      "train_loss": 1.9683666229248047
+    }
+  ],
+  "method": "baseline",
+  "role": "student",
+  "seed": 42,
+  "teacher_ref": null,
+  "test": {
+    "accuracy": 0.125,
+    "f1_macro": 0.05555555555555555,
+    "loss": 1.7593055963516235,
+    "precision_macro": 0.03125,
+    "recall_macro": 0.25
+  }
+}

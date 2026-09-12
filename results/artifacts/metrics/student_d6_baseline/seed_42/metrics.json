@@ -1,0 +1,57 @@
+{
+  "artifacts": {
+    "best_checkpoint": "/content/explainable-knowledge-distillation-bert/artifacts/checkpoints/student_d6_baseline/seed_42/best",
+    "last_checkpoint": "/content/explainable-knowledge-distillation-bert/artifacts/checkpoints/student_d6_baseline/seed_42/last"
+  },
+  "best_validation_f1_macro": 0.7220396834227923,
+  "config_hash": "9610a0967eb87ba2e9c712cc69f189a8033a8c9d65420571d637a33d40209189",
+  "depth": 6,
+  "efficiency": {
+    "classification_inference_ms_per_batch": 10.029492299986487,
+    "latency_scope": "classification_only",
+    "model_file_size_mb": 251.6109,
+    "parameter_count": 65787654,
+    "timed_batch_size": 32
+  },
+  "experiment_id": "student_d6_baseline",
+  "history": [
+    {
+      "accuracy": 0.6474820143884892,
+      "epoch": 1,
+      "f1_macro": 0.4970853206147324,
+      "loss": 1.2767200708389281,
+      "precision_macro": 0.5420614412862474,
+      "recall_macro": 0.5086266390614217,
+      "train_loss": 1.6048106402158737
+    },
+    {
+      "accuracy": 0.7482014388489209,
+      "epoch": 2,
+      "f1_macro": 0.6022302849331621,
+      "loss": 0.7751060009002686,
+      "precision_macro": 0.6635242385242385,
+      "recall_macro": 0.6119047619047618,
+      "train_loss": 1.0452849999070168
+    },
+    {
+      "accuracy": 0.8561151079136691,
+      "epoch": 3,
+      "f1_macro": 0.7220396834227923,
+      "loss": 0.6449310064315796,
+      "precision_macro": 0.7377704373108321,
+      "recall_macro": 0.7180555555555556,
+      "train_loss": 0.7180636182427407
+    }
+  ],
+  "method": "baseline",
+  "role": "student",
+  "seed": 42,
+  "teacher_ref": null,
+  "test": {
+    "accuracy": 0.8368055555555556,
+    "f1_macro": 0.6873046179130896,
+    "loss": 0.5811322331428528,
+    "precision_macro": 0.7314459930313589,
+    "recall_macro": 0.6702024291497976
+  }
+}

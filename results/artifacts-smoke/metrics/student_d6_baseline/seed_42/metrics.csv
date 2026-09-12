@@ -1,0 +1,2 @@
+accuracy,epoch,f1_macro,loss,precision_macro,recall_macro,train_loss
+0.0,1,0.0,1.850571870803833,0.0,0.0,1.8396236896514893
