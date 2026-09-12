@@ -13,6 +13,7 @@ from explainable_kd.common.runtime import describe_device, resolve_device
 from explainable_kd.common.seed import seed_everything
 from explainable_kd.data.pipeline import prepare_dataset, run_smoke_test
 from explainable_kd.training.teacher import train_teacher
+from explainable_kd.training.baseline import train_baselines
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,6 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--batch-size", type=int, default=4)
     teacher = subparsers.add_parser("train-teacher", help="fine-tune the fixed 12-layer Teacher")
     _add_config_arguments(teacher)
+    baselines = subparsers.add_parser("train-baselines", help="train 10-, 8-, and 6-layer labels-only baselines")
+    _add_config_arguments(baselines)
     return parser
 
 
@@ -46,6 +49,7 @@ def main(
     prepare_runner: Callable[[Any], dict[str, Any]] | None = None,
     smoke_runner: Callable[[Any, int], dict[str, Any]] | None = None,
     train_runner: Callable[[Any], dict[str, Any]] | None = None,
+    baseline_runner: Callable[[Any], dict[str, Any]] | None = None,
 ) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "list-experiments":
@@ -78,8 +82,10 @@ def main(
     elif args.command == "smoke-test":
         runner = smoke_runner or run_smoke_test
         result = runner(config, args.batch_size)
-    else:
+    elif args.command == "train-teacher":
         result = (train_runner or train_teacher)(config)
+    else:
+        result = (baseline_runner or train_baselines)(config)
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 
