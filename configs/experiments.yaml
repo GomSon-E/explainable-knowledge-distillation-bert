@@ -70,4 +70,3 @@ students:
     depth: 6
     method: lrp_kd
     teacher_ref: teacher_d12_supervised
-

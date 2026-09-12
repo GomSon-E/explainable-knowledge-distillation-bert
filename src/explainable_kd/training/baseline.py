@@ -2,4 +2,3 @@
 
 TODO: Train labels-only baselines without loading a Teacher.
 """
-

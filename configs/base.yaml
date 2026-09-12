@@ -31,4 +31,3 @@ evaluation:
     - spearman_correlation
     - top_k_overlap
   latency_scope: classification_only
-
