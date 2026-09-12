@@ -22,7 +22,7 @@ def test_load_config_merges_smoke_overlay_and_artifact_override(tmp_path):
 
     assert config.runtime.seed == 42
     assert config.runtime.smoke_test is True
-    assert config.data.dataset_name == "CogComp/trec"
+    assert config.data.dataset_name == "lukasgarbas/trec"
     assert config.data.tokenizer_name == "google-bert/bert-base-cased"
     assert config.data.max_length == 10
     assert config.data.max_train_samples == 32
