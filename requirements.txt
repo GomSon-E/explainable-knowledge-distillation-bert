@@ -1,12 +1,13 @@
 # Install these in the dedicated Colab setup cell.
 # Pin exact versions only after a compatibility issue is reproduced.
 torch
-transformers
-datasets
+transformers==5.17.0
+datasets==4.1.1
 captum
-scikit-learn
+scikit-learn==1.7.2
 pandas
 matplotlib
 seaborn
-pyyaml
+pyyaml==6.0.2
 tqdm
+requests>=2.32.2

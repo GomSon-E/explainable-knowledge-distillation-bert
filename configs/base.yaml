@@ -10,11 +10,13 @@ runtime:
   smoke_test: false
 
 data:
-  dataset_name: trec
+  dataset_name: CogComp/trec
+  dataset_revision: eb1e45c1ba990fecca7cf84b67ce845edbcf49bf
   tokenizer_name: google-bert/bert-base-cased
+  tokenizer_revision: cd5ef92a9fb2f889e972770a36d4ed042daf221e
   max_length: 10
   short_input_policy: filter
-  split_manifest: artifacts/data/split_manifest.json
+  validation_size: 0.1
 
 model:
   pretrained_name: google-bert/bert-base-cased
