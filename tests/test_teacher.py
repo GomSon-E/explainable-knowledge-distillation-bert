@@ -6,6 +6,7 @@ from torch import nn
 
 from explainable_kd.common.config import load_config
 from explainable_kd.training.baseline import baseline_experiment_id, train_baseline
+import explainable_kd.training.baseline as baseline_module
 from explainable_kd.training.teacher import _collate_batch, teacher_experiment_id, train_teacher
 
 
@@ -97,3 +98,30 @@ def test_baseline_smoke_saves_depth_specific_artifacts_without_teacher(tmp_path)
     assert result["teacher_ref"] is None
     assert (tmp_path / "checkpoints/student_d6_baseline/seed_42/best/pytorch_model.bin").exists()
     assert (tmp_path / "metrics/student_d6_baseline/seed_42/metrics.json").exists()
+
+
+def test_baseline_model_passes_num_labels_only_through_config(monkeypatch, tmp_path):
+    config = load_config("configs/base.yaml", artifact_root=tmp_path)
+    fake_config = SimpleNamespace(num_hidden_layers=12)
+    captured = {}
+
+    monkeypatch.setattr(
+        baseline_module.AutoConfig,
+        "from_pretrained",
+        lambda *args, **kwargs: fake_config,
+    )
+
+    def fake_model_loader(*args, **kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(config=fake_config)
+
+    monkeypatch.setattr(
+        baseline_module.AutoModelForSequenceClassification,
+        "from_pretrained",
+        fake_model_loader,
+    )
+
+    baseline_module.build_baseline_model(config, 6)
+
+    assert fake_config.num_hidden_layers == 6
+    assert "num_labels" not in captured

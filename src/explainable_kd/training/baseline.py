@@ -152,7 +152,6 @@ def build_baseline_model(config: ExperimentConfig, depth: int):
         config.model["pretrained_name"],
         revision=config.data.tokenizer_revision,
         config=baseline_config,
-        num_labels=config.model["num_labels"],
         ignore_mismatched_sizes=False,
     )
     if model.config.num_hidden_layers != depth:
