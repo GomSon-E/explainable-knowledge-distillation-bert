@@ -1,0 +1,18 @@
+# Overlay on base.yaml for a cheap Colab wiring and gradient-path check.
+runtime:
+  smoke_test: true
+  resume: false
+
+data:
+  max_train_samples: 32
+  max_validation_samples: 16
+  max_test_samples: 16
+
+training:
+  epochs: 1
+  max_steps: 2
+
+xai:
+  attribution_batches: 1
+  verify_student_gradient: true
+

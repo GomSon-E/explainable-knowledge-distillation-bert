@@ -1,0 +1,13 @@
+# Install these in the dedicated Colab setup cell.
+# Pin exact versions only after a compatibility issue is reproduced.
+torch
+transformers
+datasets
+captum
+scikit-learn
+pandas
+matplotlib
+seaborn
+pyyaml
+tqdm
+

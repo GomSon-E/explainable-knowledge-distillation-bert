@@ -1,0 +1,34 @@
+project:
+  name: explainable-bert-kd-trec6
+  artifact_root: artifacts
+
+runtime:
+  device: auto
+  seed: 42
+  deterministic: true
+  resume: true
+  smoke_test: false
+
+data:
+  dataset_name: trec
+  tokenizer_name: google-bert/bert-base-cased
+  max_length: 10
+  short_input_policy: filter
+  split_manifest: artifacts/data/split_manifest.json
+
+model:
+  pretrained_name: google-bert/bert-base-cased
+  num_labels: 6
+
+evaluation:
+  classification_metrics:
+    - accuracy
+    - precision_macro
+    - recall_macro
+    - f1_macro
+  attribution_metrics:
+    - cosine_similarity
+    - spearman_correlation
+    - top_k_overlap
+  latency_scope: classification_only
+

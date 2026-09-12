@@ -1,0 +1,73 @@
+# Canonical experiment registry. experiment_id is immutable and is also the
+# artifact directory name. Do not introduce aliases or depth-only paths.
+teacher:
+  - experiment_id: teacher_d12_supervised
+    role: teacher
+    depth: 12
+    method: supervised
+    teacher_ref: null
+
+students:
+  - experiment_id: student_d10_baseline
+    role: student
+    depth: 10
+    method: baseline
+    teacher_ref: null
+  - experiment_id: student_d10_kd
+    role: student
+    depth: 10
+    method: kd
+    teacher_ref: teacher_d12_supervised
+  - experiment_id: student_d10_ig_kd
+    role: student
+    depth: 10
+    method: ig_kd
+    teacher_ref: teacher_d12_supervised
+  - experiment_id: student_d10_lrp_kd
+    role: student
+    depth: 10
+    method: lrp_kd
+    teacher_ref: teacher_d12_supervised
+
+  - experiment_id: student_d8_baseline
+    role: student
+    depth: 8
+    method: baseline
+    teacher_ref: null
+  - experiment_id: student_d8_kd
+    role: student
+    depth: 8
+    method: kd
+    teacher_ref: teacher_d12_supervised
+  - experiment_id: student_d8_ig_kd
+    role: student
+    depth: 8
+    method: ig_kd
+    teacher_ref: teacher_d12_supervised
+  - experiment_id: student_d8_lrp_kd
+    role: student
+    depth: 8
+    method: lrp_kd
+    teacher_ref: teacher_d12_supervised
+
+  - experiment_id: student_d6_baseline
+    role: student
+    depth: 6
+    method: baseline
+    teacher_ref: null
+  - experiment_id: student_d6_kd
+    role: student
+    depth: 6
+    method: kd
+    teacher_ref: teacher_d12_supervised
+  - experiment_id: student_d6_ig_kd
+    role: student
+    depth: 6
+    method: ig_kd
+    teacher_ref: teacher_d12_supervised
+  - experiment_id: student_d6_lrp_kd
+    role: student
+    depth: 6
+    method: lrp_kd
+    teacher_ref: teacher_d12_supervised
+
