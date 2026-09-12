@@ -43,12 +43,25 @@ class DataConfig:
 
 
 @dataclass(frozen=True)
+class TrainingConfig:
+    epochs: int = 3
+    max_steps: int | None = None
+    batch_size: int = 32
+    learning_rate: float = 2e-5
+    weight_decay: float = 0.01
+    warmup_ratio: float = 0.1
+    gradient_accumulation_steps: int = 1
+    inference_repeats: int = 20
+
+
+@dataclass(frozen=True)
 class ExperimentConfig:
     project_name: str
     runtime: RuntimeConfig
     data: DataConfig
     model: Mapping[str, Any]
     evaluation: Mapping[str, Any]
+    training: TrainingConfig
     paths: ArtifactPaths
     config_hash: str
 
@@ -89,6 +102,7 @@ def load_config(
         if key in DataConfig.__dataclass_fields__
     }
     data = DataConfig(**data_values)
+    training = TrainingConfig(**raw.get("training", {}))
     _validate_config(runtime, data)
 
     hash_input = dict(raw)
@@ -102,6 +116,7 @@ def load_config(
         data=data,
         model=raw["model"],
         evaluation=raw["evaluation"],
+        training=training,
         paths=paths,
         config_hash=config_hash,
     )

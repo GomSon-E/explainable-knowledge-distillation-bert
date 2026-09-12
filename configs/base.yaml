@@ -22,6 +22,16 @@ model:
   pretrained_name: google-bert/bert-base-cased
   num_labels: 6
 
+training:
+  epochs: 3
+  max_steps: null
+  batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  gradient_accumulation_steps: 1
+  inference_repeats: 20
+
 evaluation:
   classification_metrics:
     - accuracy
