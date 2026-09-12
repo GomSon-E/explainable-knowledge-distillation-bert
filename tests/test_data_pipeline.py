@@ -86,16 +86,42 @@ def test_prepare_dataset_keeps_label_mapping_and_deterministic_splits(tmp_path):
     assert set(first.dataset) == {"train", "validation", "test"}
     assert first.manifest.split_example_ids == second.manifest.split_example_ids
     assert first.manifest.data_fingerprint == second.manifest.data_fingerprint
-    assert all(len(row) == 10 for row in first.dataset["train"]["input_ids"])
+    assert all(len(row) == 512 for row in first.dataset["train"]["input_ids"])
 
 
 def test_smoke_batch_is_a_rectangular_bert_input():
     batch = smoke_batch(
         ["Who invented the telephone?", "Where is Seoul?"],
         TinyTokenizer(),
-        max_length=10,
+        max_length=512,
     )
 
     assert set(batch) >= {"input_ids", "attention_mask", "token_type_ids"}
-    assert all(value.shape == (2, 10) for value in batch.values())
+    assert all(value.shape == (2, 512) for value in batch.values())
     assert all(value.dtype == torch.int64 for value in batch.values())
+
+
+def test_filter_policy_keeps_examples_up_to_bert_max_length(tmp_path):
+    config = load_config("configs/base.yaml", artifact_root=tmp_path)
+    config = replace(
+        config,
+        data=replace(
+            config.data,
+            max_length=512,
+            short_input_policy="filter",
+            validation_size=1 / 3,
+        ),
+    )
+    long_text = " ".join(["long"] * 600)
+    raw = make_trec_fixture()
+    raw = DatasetDict(
+        {
+            "train": raw["train"].add_item({"text": long_text, "coarse_label": 0, "fine_label": 0}),
+            "test": raw["test"],
+        }
+    )
+
+    prepared = prepare_dataset(config, raw_dataset=raw, tokenizer=TinyTokenizer())
+
+    assert sum(prepared.manifest.split_counts.values()) == len(raw["train"]) + len(raw["test"]) - 1
+    assert all(len(row) <= 512 for row in prepared.dataset["train"]["input_ids"])

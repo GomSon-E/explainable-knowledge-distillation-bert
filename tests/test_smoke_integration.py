@@ -25,5 +25,5 @@ def test_real_trec_batch_reaches_bert_tensor_inputs(tmp_path):
     assert result["status"] == "passed"
     assert result["tokenizer"] == "google-bert/bert-base-cased"
     assert result["batch_size"] == 4
-    assert result["sequence_length"] == 10
-    assert result["tensor_shapes"]["input_ids"] == [4, 10]
+    assert result["sequence_length"] == 512
+    assert result["tensor_shapes"]["input_ids"] == [4, 512]

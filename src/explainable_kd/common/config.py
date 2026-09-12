@@ -184,8 +184,8 @@ def _deep_merge(base: Mapping[str, Any], overlay: Mapping[str, Any]) -> dict[str
 def _validate_config(runtime: RuntimeConfig, data: DataConfig) -> None:
     if runtime.seed < 0:
         raise ValueError("seed must be non-negative")
-    if data.max_length != 10:
-        raise ValueError("project protocol requires data.max_length=10")
+    if data.max_length != 512:
+        raise ValueError("project protocol requires data.max_length=512")
     if data.short_input_policy not in {"filter", "truncate"}:
         raise ValueError("short_input_policy must be 'filter' or 'truncate'")
     if not 0 < data.validation_size < 1:

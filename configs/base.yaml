@@ -14,7 +14,7 @@ data:
   dataset_revision: 4ae150f146d9c82be194a182e7f01c6b01c20d9d
   tokenizer_name: google-bert/bert-base-cased
   tokenizer_revision: cd5ef92a9fb2f889e972770a36d4ed042daf221e
-  max_length: 10
+  max_length: 512
   short_input_policy: filter
   validation_size: 0.1
 
