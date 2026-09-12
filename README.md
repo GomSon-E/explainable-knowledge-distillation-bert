@@ -2,9 +2,9 @@
 
 이 저장소는 12층 BERT Teacher의 예측 분포와 토큰 중요도를 10·8·6층
 Student에 전달하는 13개 실험을 Google Colab GPU에서 재현하기 위한
-프로젝트 골격이다. 현재 단계에는 **학습, 평가, IG, LRP 구현이 없으며**,
-실행 구조와 설정·산출물 계약만 정의되어 있다. 현재 구현 범위는 공통 데이터
-기반과 smoke test까지이며 Teacher/Student/KD/XAI 학습은 아직 시작하지 않았다.
+프로젝트다. 현재 구현 범위는 공통 데이터 기반, 12층 Teacher fine-tuning,
+10·8·6층 labels-only baseline, 일반 KD, IG attribution 추출·시각화와 smoke
+test다. IG 설명 손실 학습과 LRP는 아직 구현하지 않는다.
 
 설계 기준 문서는 `AGENTS.md`, `01_video_notes.md`,
 `02_assignment_brief.md`, `03_experiment_plan.md`,
@@ -186,8 +186,8 @@ revision, data fingerprint, split counts, tensor shapes가 함께 저장된다.
 5. 저장소 루트에서 `pip install -r requirements.txt`와 `pip install .`을
    실행한다. 구형 로컬 pip의 editable 설치는 사용하지 않는다.
 
-현재 notebook에는 데이터 준비·smoke 명령만 활성화되어 있으며 학습 명령은
-의도적으로 주석 처리되어 있다.
+notebook에는 데이터 준비·smoke·Teacher 학습 명령이 활성화되어 있으며,
+baseline·일반 KD와 전체 학습 명령은 주석으로 제공한다.
 
 ## Colab 실행 순서와 단계별 I/O
 

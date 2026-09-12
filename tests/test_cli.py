@@ -114,3 +114,53 @@ def test_train_baselines_routes_to_baseline_runner(tmp_path, capsys):
 
     assert exit_code == 0
     assert calls == [True]
+
+
+def test_train_kd_routes_to_kd_runner(tmp_path, capsys):
+    calls = []
+
+    def runner(config):
+        calls.append(config.runtime.smoke_test)
+        return {"status": "passed"}
+
+    exit_code = main(
+        [
+            "train-kd",
+            "--config",
+            "configs/base.yaml",
+            "--overlay",
+            "configs/smoke.yaml",
+            "--artifact-root",
+            str(tmp_path),
+        ],
+        kd_runner=runner,
+    )
+
+    assert exit_code == 0
+    assert calls == [True]
+
+
+def test_extract_ig_routes_to_ig_runner(tmp_path, capsys):
+    calls = []
+
+    def runner(config, max_examples):
+        calls.append((config.runtime.smoke_test, max_examples))
+        return {"status": "passed"}
+
+    exit_code = main(
+        [
+            "extract-ig",
+            "--config",
+            "configs/base.yaml",
+            "--overlay",
+            "configs/smoke.yaml",
+            "--artifact-root",
+            str(tmp_path),
+            "--max-examples",
+            "1",
+        ],
+        ig_runner=runner,
+    )
+
+    assert exit_code == 0
+    assert calls == [(True, 1)]

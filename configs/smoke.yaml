@@ -14,4 +14,5 @@ training:
 
 xai:
   attribution_batches: 1
+  max_examples: 1
   verify_student_gradient: true
