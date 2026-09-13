@@ -1,5 +1,5 @@
-0*.md
-AGENTS.md
+# 0*.md
+# AGENTS.md
 __pycache__/
 *.py[cod]
 *.egg-info/
